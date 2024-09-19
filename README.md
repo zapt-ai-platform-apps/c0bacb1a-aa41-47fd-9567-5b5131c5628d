@@ -23,5 +23,5 @@ This app provides UK employment law advice to both employers and employees. User
 1. Below the report, there are options to share or export the report.
 2. Click the "Share Report" button to share via iMessage, WhatsApp, or other supported apps.
    - A share dialog will appear, allowing you to choose the app through which you want to share the report.
-3. Click the "Export as Word Document" button to download the report as an MS Word (.docx) file.
-   - The report will be downloaded to your device, and you can open it with MS Word.
+3. Click the "Export as Word Document" button to download the report as a Microsoft Word (.docx) file.
+   - The report will be formatted as a Word document for easy editing and printing.

@@ -1,7 +1,9 @@
 import { createSignal, Show } from 'solid-js'
 import { createEvent } from './supabaseClient'
 import { SolidMarkdown } from "solid-markdown"
-import htmlDocx from 'html-docx-js/dist/html-docx'
+import { saveAs } from 'file-saver'
+import { marked } from 'marked'
+import htmlToDocx from 'html-to-docx'
 
 function App() {
   const [queryText, setQueryText] = createSignal('')
@@ -40,21 +42,24 @@ function App() {
     }
   }
 
-  const handleExportWord = () => {
+  const handleExportWord = async () => {
     if (!report()) return
-    const converted = htmlDocx.asBlob(`<html><head><meta charset="utf-8"></head><body>${report()}</body></html>`)
-    const url = URL.createObjectURL(converted)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'Employment_Law_Advice_Report.docx'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+
+    try {
+      const mdHtml = marked(report())
+      const docxBlob = await htmlToDocx(mdHtml, null, {
+        table: { row: { cantSplit: true } },
+        footer: true,
+        pageNumber: true,
+      })
+      saveAs(docxBlob, 'Employment_Law_Advice_Report.docx')
+    } catch (error) {
+      console.error('Error exporting Word document:', error)
+    }
   }
 
   return (
-    <div class="h-full flex flex-col items-center justify-center bg-gray-100 text-gray-800">
+    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-gray-800">
       <div class="w-full max-w-2xl p-6 bg-white rounded-lg shadow-md h-full">
         <h1 class="text-3xl font-bold mb-6 text-center">UK Employment Law Advice</h1>
         <div class="mb-6">
