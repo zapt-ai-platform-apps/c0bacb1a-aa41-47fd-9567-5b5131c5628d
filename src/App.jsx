@@ -3,7 +3,7 @@ import { createEvent, supabase } from './supabaseClient'
 import { SolidMarkdown } from "solid-markdown"
 import { saveAs } from 'file-saver'
 import { marked } from 'marked'
-import htmlToDocx from 'html-to-docx'
+import { Document, Paragraph, Packer } from 'docx'
 import { Auth } from '@supabase/auth-ui-solid'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 
@@ -62,13 +62,18 @@ function App() {
     if (!report()) return
 
     try {
-      const mdHtml = marked(report())
-      const docxBlob = await htmlToDocx(mdHtml, null, {
-        table: { row: { cantSplit: true } },
-        footer: true,
-        pageNumber: true,
+      const mdContent = report()
+      const lines = mdContent.split('\n')
+      const doc = new Document()
+
+      const paragraphs = lines.map((line) => new Paragraph(line))
+      doc.addSection({
+        properties: {},
+        children: paragraphs,
       })
-      saveAs(docxBlob, 'Employment_Law_Advice_Report.docx')
+
+      const blob = await Packer.toBlob(doc)
+      saveAs(blob, 'Employment_Law_Advice_Report.docx')
     } catch (error) {
       console.error('Error exporting Word document:', error)
     }

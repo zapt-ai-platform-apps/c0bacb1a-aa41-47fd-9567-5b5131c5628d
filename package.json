@@ -13,7 +13,6 @@
     "@supabase/supabase-js": "^2.10.0",
     "docx": "^7.7.0",
     "file-saver": "^2.0.5",
-    "html-to-docx": "^1.1.0",
     "marked": "^4.0.18",
     "solid-js": "^1.6.10",
     "solid-markdown": "^2.0.13"
