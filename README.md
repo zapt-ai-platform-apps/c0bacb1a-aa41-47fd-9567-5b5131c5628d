@@ -25,3 +25,9 @@ This app provides UK employment law advice to both employers and employees. User
    - A share dialog will appear, allowing you to choose the app through which you want to share the report.
 3. Click the "Export as Word Document" button to download the report as a Microsoft Word (.docx) file.
    - The report will be formatted as a Word document for easy editing and printing.
+
+### 4. Authentication
+
+1. Users are required to sign in using ZAPT authentication.
+2. On the login page, click on one of the social login providers: Google, Facebook, or Apple.
+3. After successful authentication, you will be redirected to the main page where you can submit your query.
