@@ -3,7 +3,7 @@ import { createEvent, supabase } from './supabaseClient'
 import { SolidMarkdown } from "solid-markdown"
 import { saveAs } from 'file-saver'
 import { marked } from 'marked'
-import { Document, Paragraph, Packer } from 'docx'
+import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx'
 import { Auth } from '@supabase/auth-ui-solid'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 
@@ -43,18 +43,20 @@ function App() {
     }
   }
 
-  const handleShareReport = async () => {
-    if (navigator.share && report()) {
-      try {
-        await navigator.share({
-          title: 'Employment Law Advice Report',
-          text: report(),
-        })
-      } catch (error) {
-        console.error('Error sharing report:', error)
-      }
-    } else {
-      alert('Sharing not supported on this device.')
+  const handleShareWhatsApp = () => {
+    if (!report()) return
+    const text = encodeURIComponent(report())
+    const url = `https://api.whatsapp.com/send?text=${text}`
+    window.open(url, '_blank')
+  }
+
+  const handleCopyReport = async () => {
+    if (!report()) return
+    try {
+      await navigator.clipboard.writeText(report())
+      alert('Report copied to clipboard.')
+    } catch (error) {
+      console.error('Failed to copy: ', error)
     }
   }
 
@@ -63,13 +65,40 @@ function App() {
 
     try {
       const mdContent = report()
-      const lines = mdContent.split('\n')
+      const tokens = marked.lexer(mdContent)
       const doc = new Document()
 
-      const paragraphs = lines.map((line) => new Paragraph(line))
+      const children = []
+
+      tokens.forEach((token) => {
+        if (token.type === 'heading') {
+          children.push(
+            new Paragraph({
+              text: token.text,
+              heading: HeadingLevel[`HEADING_${token.depth}`],
+            })
+          )
+        } else if (token.type === 'paragraph') {
+          children.push(new Paragraph(token.text))
+        } else if (token.type === 'list') {
+          token.items.forEach((item) => {
+            children.push(
+              new Paragraph({
+                text: item.text,
+                bullet: {
+                  level: 0,
+                },
+              })
+            )
+          })
+        } else if (token.type === 'text') {
+          children.push(new Paragraph(token.text))
+        }
+      })
+
       doc.addSection({
         properties: {},
-        children: paragraphs,
+        children: children,
       })
 
       const blob = await Packer.toBlob(doc)
@@ -148,15 +177,21 @@ function App() {
                 <SolidMarkdown children={report()} />
               </div>
             </div>
-            <div class="flex justify-center space-x-4 mt-6">
+            <div class="flex flex-wrap justify-center space-x-4 mt-6">
               <button
-                class="px-6 py-3 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600"
-                onClick={handleShareReport}
+                class="px-6 py-3 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 mt-2"
+                onClick={handleShareWhatsApp}
               >
-                Share Report
+                Share via WhatsApp
               </button>
               <button
-                class="px-6 py-3 bg-purple-500 text-white rounded cursor-pointer hover:bg-purple-600"
+                class="px-6 py-3 bg-yellow-500 text-white rounded cursor-pointer hover:bg-yellow-600 mt-2"
+                onClick={handleCopyReport}
+              >
+                Copy Report
+              </button>
+              <button
+                class="px-6 py-3 bg-purple-500 text-white rounded cursor-pointer hover:bg-purple-600 mt-2"
                 onClick={handleExportWord}
               >
                 Export as Word Document

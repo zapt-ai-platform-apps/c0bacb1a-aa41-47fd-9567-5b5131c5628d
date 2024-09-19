@@ -27,10 +27,18 @@ This app provides UK employment law advice to both employers and employees. User
 ### 4. Sharing or Exporting the Report
 
 1. Below the report, there are options to share or export the report.
-2. Click the "Share Report" button to share via iMessage, WhatsApp, or other supported apps.
-   - A share dialog will appear, allowing you to choose the app through which you want to share the report.
-3. Click the "Export as Word Document" button to download the report as a Microsoft Word (.docx) file.
-   - The report will be formatted as a Word document for easy editing and printing.
+2. **Share via WhatsApp**:
+   - Click the "Share via WhatsApp" button.
+   - A new tab will open, directing you to WhatsApp with the report text pre-filled.
+   - Choose the contact or group you wish to share the report with.
+3. **Copy Report**:
+   - Click the "Copy Report" button.
+   - The report text will be copied to your clipboard.
+   - You can now paste it into any application or message.
+4. **Export as Word Document**:
+   - Click the "Export as Word Document" button.
+   - The report will be downloaded as a Microsoft Word (.docx) file.
+   - The document is formatted for easy editing and printing.
 
 ### 5. Signing Out
 
@@ -42,7 +50,7 @@ This app provides UK employment law advice to both employers and employees. User
 - **User Authentication**: Secure sign-in using ZAPT with options for Google, Facebook, or Apple accounts.
 - **Query Input**: Easy-to-use text area for entering your employment law questions or issues.
 - **Real-time Advice**: Generates detailed advice based on your query, referencing UK employment laws and best practices.
-- **Report Sharing**: Share the advice report instantly via supported apps.
+- **Report Sharing**: Share the advice report instantly via WhatsApp or copy it to your clipboard.
 - **Export to Word**: Download the advice report as a Word document for offline access or printing.
 
 ## Notes
