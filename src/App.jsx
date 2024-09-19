@@ -1,23 +1,23 @@
-import { createSignal, Show, onMount } from 'solid-js'
+import { createSignal, Show, onMount, createEffect } from 'solid-js'
 import { createEvent, supabase } from './supabaseClient'
 import { SolidMarkdown } from "solid-markdown"
 import { saveAs } from 'file-saver'
 import { marked } from 'marked'
-import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx'
+import { Document, Packer, Paragraph, HeadingLevel } from 'docx'
 import { Auth } from '@supabase/auth-ui-solid'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 
 function App() {
   const [queryText, setQueryText] = createSignal('')
+  const [followUpQuery, setFollowUpQuery] = createSignal('')
   const [loading, setLoading] = createSignal(false)
   const [report, setReport] = createSignal('')
   const [user, setUser] = createSignal(null)
   const [currentPage, setCurrentPage] = createSignal('login')
+  const [followUp, setFollowUp] = createSignal(false)
 
   const checkUserSignedIn = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUser(user)
       setCurrentPage('homePage')
@@ -25,6 +25,22 @@ function App() {
   }
 
   onMount(checkUserSignedIn)
+
+  createEffect(() => {
+    const authListener = supabase.auth.onAuthStateChange((_, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        setCurrentPage('homePage')
+      } else {
+        setUser(null)
+        setCurrentPage('login')
+      }
+    })
+
+    return () => {
+      authListener.data.unsubscribe()
+    }
+  })
 
   const handleGetAdvice = async () => {
     if (!queryText()) return
@@ -36,6 +52,25 @@ function App() {
         response_type: 'text',
       })
       setReport(result)
+    } catch (error) {
+      console.error('Error creating event:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGetFurtherAdvice = async () => {
+    if (!followUpQuery()) return
+    setLoading(true)
+    try {
+      const prompt = `Provide further UK employment law advice to help resolve the following query by referring to applicable legislation and best practices:\n\nInitial Issue: "${queryText()}"\n\nFollow-up Question: "${followUpQuery()}"`
+      const result = await createEvent('chatgpt_request', {
+        prompt: prompt,
+        response_type: 'text',
+      })
+      setReport(result)
+      setFollowUp(false)
+      setFollowUpQuery('')
     } catch (error) {
       console.error('Error creating event:', error)
     } finally {
@@ -114,6 +149,22 @@ function App() {
     setCurrentPage('login')
   }
 
+  const handleFurtherAdvice = () => {
+    setFollowUp(true)
+  }
+
+  const handleNewIssue = () => {
+    setQueryText('')
+    setReport('')
+    setFollowUp(false)
+  }
+
+  const handleExitApp = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setCurrentPage('login')
+  }
+
   return (
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-gray-800">
       <Show
@@ -147,29 +198,31 @@ function App() {
               Sign Out
             </button>
           </div>
-          <div class="mb-6">
-            <label for="query" class="block text-lg font-medium mb-2">
-              Describe your employment issue or question:
-            </label>
-            <textarea
-              id="query"
-              class="w-full h-32 px-3 py-2 border rounded box-border focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your query here..."
-              value={queryText()}
-              onInput={(e) => setQueryText(e.target.value)}
-            ></textarea>
-          </div>
-          <div class="flex justify-center mb-6">
-            <button
-              class="px-6 py-3 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600"
-              onClick={handleGetAdvice}
-              disabled={loading()}
-            >
-              <Show when={!loading()} fallback={<span>Generating Advice...</span>}>
-                Get Advice
-              </Show>
-            </button>
-          </div>
+          <Show when={!report() || followUp() === true}>
+            <div class="mb-6">
+              <label for="query" class="block text-lg font-medium mb-2">
+                Describe your employment issue or question:
+              </label>
+              <textarea
+                id="query"
+                class="w-full h-32 px-3 py-2 border rounded box-border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your query here..."
+                value={followUp() ? followUpQuery() : queryText()}
+                onInput={(e) => followUp() ? setFollowUpQuery(e.target.value) : setQueryText(e.target.value)}
+              ></textarea>
+            </div>
+            <div class="flex justify-center mb-6">
+              <button
+                class="px-6 py-3 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600"
+                onClick={followUp() ? handleGetFurtherAdvice : handleGetAdvice}
+                disabled={loading()}
+              >
+                <Show when={!loading()} fallback={<span>{followUp() ? 'Generating Further Advice...' : 'Generating Advice...'}</span>}>
+                  {followUp() ? 'Get Further Advice' : 'Get Advice'}
+                </Show>
+              </button>
+            </div>
+          </Show>
           <Show when={report()}>
             <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h3 class="text-xl font-semibold mb-2">Your Employment Law Advice:</h3>
@@ -196,6 +249,31 @@ function App() {
               >
                 Export as Word Document
               </button>
+            </div>
+            <div class="mt-6">
+              <h3 class="text-lg font-medium mb-4 text-center">
+                Would you like to ask for further advice on this issue, ask about a new issue, or exit the app?
+              </h3>
+              <div class="flex flex-wrap justify-center space-x-4">
+                <button
+                  class="px-6 py-3 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 mt-2"
+                  onClick={handleFurtherAdvice}
+                >
+                  Ask for Further Advice
+                </button>
+                <button
+                  class="px-6 py-3 bg-gray-500 text-white rounded cursor-pointer hover:bg-gray-600 mt-2"
+                  onClick={handleNewIssue}
+                >
+                  Ask About a New Issue
+                </button>
+                <button
+                  class="px-6 py-3 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 mt-2"
+                  onClick={handleExitApp}
+                >
+                  Exit the App
+                </button>
+              </div>
             </div>
           </Show>
         </div>

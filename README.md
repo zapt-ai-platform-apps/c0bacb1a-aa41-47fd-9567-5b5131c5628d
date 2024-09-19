@@ -1,6 +1,6 @@
 # UK Employment Law Advice App
 
-This app provides UK employment law advice to both employers and employees. Users can input their query and receive a report that helps them resolve their issue by referring to applicable legislation and best practices.
+This app provides UK employment law advice to both employers and employees. Users can input their query and receive a report that helps them resolve their issue by referring to applicable legislation and best practices. After receiving the advice, users can choose to ask for further advice on the issue, ask about a new issue, or exit the app.
 
 ## User Journeys
 
@@ -23,8 +23,23 @@ This app provides UK employment law advice to both employers and employees. User
 1. After submitting your query, a loading indicator will appear while the app generates the report.
 2. Once the report is ready, it will be displayed on the screen.
 3. The report includes advice and references to applicable UK employment legislation and best practices.
+4. Below the report, you have options to share or export the report.
 
-### 4. Sharing or Exporting the Report
+### 4. Post-Advice Options
+
+1. After viewing the report, the app will ask: "Would you like to ask for further advice on this issue, ask about a new issue, or exit the app?"
+2. **Ask for Further Advice**:
+   - Click the "Ask for Further Advice" button.
+   - You can input additional questions or clarifications about the same issue.
+   - Click "Get Further Advice" to receive more detailed guidance.
+3. **Ask About a New Issue**:
+   - Click the "Ask About a New Issue" button.
+   - The app will reset, allowing you to enter a new employment issue or question.
+4. **Exit the App**:
+   - Click the "Exit the App" button.
+   - You will be signed out and redirected to the login page.
+
+### 5. Sharing or Exporting the Report
 
 1. Below the report, there are options to share or export the report.
 2. **Share via WhatsApp**:
@@ -40,9 +55,9 @@ This app provides UK employment law advice to both employers and employees. User
    - The report will be downloaded as a Microsoft Word (.docx) file.
    - The document is formatted for easy editing and printing.
 
-### 5. Signing Out
+### 6. Signing Out
 
-1. To sign out, click the "Sign Out" button located at the top right corner of the main page.
+1. To sign out at any time, click the "Sign Out" button located at the top right corner of the main page.
 2. You will be redirected back to the login page.
 
 ## Features
@@ -50,6 +65,7 @@ This app provides UK employment law advice to both employers and employees. User
 - **User Authentication**: Secure sign-in using ZAPT with options for Google, Facebook, or Apple accounts.
 - **Query Input**: Easy-to-use text area for entering your employment law questions or issues.
 - **Real-time Advice**: Generates detailed advice based on your query, referencing UK employment laws and best practices.
+- **Post-Advice Options**: Ability to ask for further advice on the same issue, ask about a new issue, or exit the app.
 - **Report Sharing**: Share the advice report instantly via WhatsApp or copy it to your clipboard.
 - **Export to Word**: Download the advice report as a Word document for offline access or printing.
 
