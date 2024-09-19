@@ -27,7 +27,7 @@ export async function createEvent(eventType, dataInput) {
         event: 'UPDATE', 
         schema: 'public', 
         table: 'frontend_events',
-        filter: `id=eq.${eventId} AND status=eq.complete`
+        filter: `id=eq.${eventId} AND status=eq.COMPLETE`
       }, (payload) => {
         subscriptionActive = true;
         resolve(payload.new.response);
