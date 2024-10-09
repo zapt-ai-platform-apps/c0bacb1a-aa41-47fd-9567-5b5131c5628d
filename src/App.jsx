@@ -9,12 +9,11 @@ import { ThemeSupa } from '@supabase/auth-ui-shared'
 
 function App() {
   const [queryText, setQueryText] = createSignal('')
-  const [followUpQuery, setFollowUpQuery] = createSignal('')
   const [loading, setLoading] = createSignal(false)
   const [report, setReport] = createSignal('')
   const [user, setUser] = createSignal(null)
   const [currentPage, setCurrentPage] = createSignal('login')
-  const [followUp, setFollowUp] = createSignal(false)
+  const [userType, setUserType] = createSignal('')
 
   const checkUserSignedIn = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -46,31 +45,12 @@ function App() {
     if (!queryText()) return
     setLoading(true)
     try {
-      const prompt = `Provide UK employment law advice to help resolve the following query by referring to applicable legislation and best practices:\n\n"${queryText()}"`
+      const prompt = `As an ${userType()}, provide UK employment law advice to help resolve the following query by referring to applicable legislation and best practices:\n\n"${queryText()}"`
       const result = await createEvent('chatgpt_request', {
         prompt: prompt,
         response_type: 'text',
       })
       setReport(result)
-    } catch (error) {
-      console.error('Error creating event:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleGetFurtherAdvice = async () => {
-    if (!followUpQuery()) return
-    setLoading(true)
-    try {
-      const prompt = `Provide further UK employment law advice to help resolve the following query by referring to applicable legislation and best practices:\n\nInitial Issue: "${queryText()}"\n\nFollow-up Question: "${followUpQuery()}"`
-      const result = await createEvent('chatgpt_request', {
-        prompt: prompt,
-        response_type: 'text',
-      })
-      setReport(result)
-      setFollowUp(false)
-      setFollowUpQuery('')
     } catch (error) {
       console.error('Error creating event:', error)
     } finally {
@@ -149,20 +129,10 @@ function App() {
     setCurrentPage('login')
   }
 
-  const handleFurtherAdvice = () => {
-    setFollowUp(true)
-  }
-
-  const handleNewIssue = () => {
+  const handleNewQuery = () => {
+    setUserType('')
     setQueryText('')
     setReport('')
-    setFollowUp(false)
-  }
-
-  const handleExitApp = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setCurrentPage('login')
   }
 
   return (
@@ -184,98 +154,119 @@ function App() {
               supabaseClient={supabase}
               appearance={{ theme: ThemeSupa }}
               providers={['google', 'facebook', 'apple']}
+              magicLink={true}
+              showLinks={false}
+              view="magic_link"
             />
           </div>
         }
       >
-        <div class="w-full max-w-2xl p-6 bg-white rounded-lg shadow-md h-full">
-          <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">UK Employment Law Advice</h1>
-            <button
-              class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer"
-              onClick={handleSignOut}
-            >
-              Sign Out
-            </button>
-          </div>
-          <Show when={!report() || followUp() === true}>
-            <div class="mb-6">
-              <label for="query" class="block text-lg font-medium mb-2">
-                Describe your employment issue or question:
-              </label>
-              <textarea
-                id="query"
-                class="w-full h-32 px-3 py-2 border rounded box-border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your query here..."
-                value={followUp() ? followUpQuery() : queryText()}
-                onInput={(e) => followUp() ? setFollowUpQuery(e.target.value) : setQueryText(e.target.value)}
-              ></textarea>
-            </div>
-            <div class="flex justify-center mb-6">
+        <div class="min-h-screen w-full flex flex-col items-center bg-gray-100">
+          <div class="w-full max-w-2xl p-6 bg-white rounded-lg shadow-md h-full mt-4">
+            <div class="flex justify-between items-center mb-6">
+              <h1 class="text-3xl font-bold text-purple-600">Employment Advisor</h1>
               <button
-                class="px-6 py-3 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600"
-                onClick={followUp() ? handleGetFurtherAdvice : handleGetAdvice}
-                disabled={loading()}
+                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer"
+                onClick={handleSignOut}
               >
-                <Show when={!loading()} fallback={<span>{followUp() ? 'Generating Further Advice...' : 'Generating Advice...'}</span>}>
-                  {followUp() ? 'Get Further Advice' : 'Get Advice'}
-                </Show>
+                Sign Out
               </button>
             </div>
-          </Show>
-          <Show when={report()}>
-            <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h3 class="text-xl font-semibold mb-2">Your Employment Law Advice:</h3>
-              <div class="text-gray-700 prose">
-                <SolidMarkdown children={report()} />
+            <Show when={!userType()}>
+              <div class="text-center">
+                <h2 class="text-2xl font-semibold mb-4">Are you an employer or an employee?</h2>
+                <div class="flex justify-center space-x-4">
+                  <button
+                    class="px-6 py-3 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600"
+                    onClick={() => setUserType('employer')}
+                  >
+                    Employer
+                  </button>
+                  <button
+                    class="px-6 py-3 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600"
+                    onClick={() => setUserType('employee')}
+                  >
+                    Employee
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="flex flex-wrap justify-center space-x-4 mt-6">
-              <button
-                class="px-6 py-3 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 mt-2"
-                onClick={handleShareWhatsApp}
-              >
-                Share via WhatsApp
-              </button>
-              <button
-                class="px-6 py-3 bg-yellow-500 text-white rounded cursor-pointer hover:bg-yellow-600 mt-2"
-                onClick={handleCopyReport}
-              >
-                Copy Report
-              </button>
-              <button
-                class="px-6 py-3 bg-purple-500 text-white rounded cursor-pointer hover:bg-purple-600 mt-2"
-                onClick={handleExportWord}
-              >
-                Export as Word Document
-              </button>
-            </div>
-            <div class="mt-6">
-              <h3 class="text-lg font-medium mb-4 text-center">
-                Would you like to ask for further advice on this issue, ask about a new issue, or exit the app?
-              </h3>
-              <div class="flex flex-wrap justify-center space-x-4">
+            </Show>
+            <Show when={userType() && !report()}>
+              <div class="mt-6">
+                <label for="query" class="block text-lg font-medium mb-2">
+                  Describe your employment issue or question:
+                </label>
+                <textarea
+                  id="query"
+                  class="w-full h-32 px-3 py-2 border rounded box-border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your query here..."
+                  value={queryText()}
+                  onInput={(e) => setQueryText(e.target.value)}
+                ></textarea>
+                <div class="flex justify-center mt-6">
+                  <button
+                    class={`px-6 py-3 bg-purple-500 text-white rounded cursor-pointer hover:bg-purple-600 ${loading() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={handleGetAdvice}
+                    disabled={loading()}
+                  >
+                    <Show when={!loading()} fallback={<span>Generating Advice...</span>}>
+                      Get Advice
+                    </Show>
+                  </button>
+                </div>
+              </div>
+            </Show>
+            <Show when={report()}>
+              <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 class="text-xl font-semibold mb-2 text-purple-600">Your Employment Law Advice:</h3>
+                <div class="text-gray-700 prose">
+                  <SolidMarkdown children={report()} />
+                </div>
+              </div>
+              <div class="mt-4 text-sm text-red-600 text-center">
+                Please note that this output is not legal advice and that you should seek proper legal advice if required.
+              </div>
+              <div class="flex flex-wrap justify-center space-x-4 mt-6">
+                <button
+                  class="px-6 py-3 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 mt-2"
+                  onClick={handleShareWhatsApp}
+                >
+                  Share via WhatsApp
+                </button>
+                <button
+                  class="px-6 py-3 bg-yellow-500 text-white rounded cursor-pointer hover:bg-yellow-600 mt-2"
+                  onClick={handleCopyReport}
+                >
+                  Copy Report
+                </button>
                 <button
                   class="px-6 py-3 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 mt-2"
-                  onClick={handleFurtherAdvice}
+                  onClick={handleExportWord}
                 >
-                  Ask for Further Advice
-                </button>
-                <button
-                  class="px-6 py-3 bg-gray-500 text-white rounded cursor-pointer hover:bg-gray-600 mt-2"
-                  onClick={handleNewIssue}
-                >
-                  Ask About a New Issue
-                </button>
-                <button
-                  class="px-6 py-3 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 mt-2"
-                  onClick={handleExitApp}
-                >
-                  Exit the App
+                  Export as Word Document
                 </button>
               </div>
-            </div>
-          </Show>
+              <div class="mt-6">
+                <h3 class="text-lg font-medium mb-4 text-center">
+                  Would you like to ask another query or exit the app?
+                </h3>
+                <div class="flex flex-wrap justify-center space-x-4">
+                  <button
+                    class="px-6 py-3 bg-purple-500 text-white rounded cursor-pointer hover:bg-purple-600 mt-2"
+                    onClick={handleNewQuery}
+                  >
+                    Ask Another Query
+                  </button>
+                  <button
+                    class="px-6 py-3 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 mt-2"
+                    onClick={handleSignOut}
+                  >
+                    Exit the App
+                  </button>
+                </div>
+              </div>
+            </Show>
+          </div>
         </div>
       </Show>
     </div>
